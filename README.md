@@ -1,9 +1,8 @@
-# AWS Connected Vehicle Reference Architecture Bootcamp
-During this Bootcamp, we'll take a deep dive into the AWS 
-Connected Vehicle Reference Architecture. Attendees will install it, 
-generate trip data from a simulated vehicle, and learn how 
-the data can be accessed with various other AWS services. In 
-this bootcamp, we'll access trip data using an Alexa skill.
+# alexa_hackathon
+During this hackathon, we'll take a deep dive into API Gateway, Lambda, DynamoDB, 
+and the Alexa Skills Kit by building a skill that invokes a simple RESTful API. This agenda
+is intended for a daylong session and a group of 15-30 people, splitting up into two teams. One
+team focuses on API development, while the other team focuses on Alexa integration.
 
 > #### Prerequisites
 >We'll assume that you have some basic knowledge of AWS 
@@ -16,7 +15,6 @@ to the workshop:
 >* The AWS CLI, configured with an Administrator Access ([directions here](https://docs.aws.amazon.com/cli/latest/userguide/installing.html))
 >* The ASK CLI ([Alexa Skills Kit CLI](https://developer.amazon.com/docs/smapi/quick-start-alexa-skills-kit-command-line-interface.html#step-1-prerequisites-for-using-ask-cli))
 >* Python, Node, and NPM, Virtualenv, git
->* a HERE Maps app_code and app_id (register for a free account at [developer.here.com](developer.here.com))
 
 ## Introduction
 This Bootcamp has four main parts as shown below. The intent 
