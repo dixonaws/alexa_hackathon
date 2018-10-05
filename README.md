@@ -1,111 +1,364 @@
-Build An Alexa Quiz Skill in Python using ASK Python SDK
-=============
+# AWS Connected Vehicle Reference Architecture Bootcamp
+During this Bootcamp, we'll take a deep dive into the AWS 
+Connected Vehicle Reference Architecture. Attendees will install it, 
+generate trip data from a simulated vehicle, and learn how 
+the data can be accessed with various other AWS services. In 
+this bootcamp, we'll access trip data using an Alexa skill.
 
-![Tutorial Header](https://m.media-amazon.com/images/G/01/mobile-apps/dex/alexa/alexa-skills-kit/tutorials/fact/header._TTH_.png)
+> #### Prerequisites
+>We'll assume that you have some basic knowledge of AWS 
+services like IAM, Cloudformation, DynamoDB, S3, IoT, etc., 
+are comfortable using the AWS CLI, and have some knowledge 
+of Python. You'll also need to prepare the following <b>prior</b> 
+to the workshop: 
+>* Laptop running Windows or MacOS
+>* An AWS account with Administrator Access
+>* The AWS CLI, configured with an Administrator Access ([directions here](https://docs.aws.amazon.com/cli/latest/userguide/installing.html))
+>* The ASK CLI ([Alexa Skills Kit CLI](https://developer.amazon.com/docs/smapi/quick-start-alexa-skills-kit-command-line-interface.html#step-1-prerequisites-for-using-ask-cli))
+>* Python, Node, and NPM, Virtualenv, git
+>* a HERE Maps app_code and app_id (register for a free account at [developer.here.com](developer.here.com))
 
-[![Voice User Interface](https://m.media-amazon.com/images/G/01/mobile-apps/dex/alexa/alexa-skills-kit/tutorials/navigation/1-on._TTH_.png)](./instructions/1-voice-user-interface.md)[![Lambda Function](https://m.media-amazon.com/images/G/01/mobile-apps/dex/alexa/alexa-skills-kit/tutorials/navigation/2-off._TTH_.png)](./instructions/2-lambda-function.md)[![Connect VUI to Code](https://m.media-amazon.com/images/G/01/mobile-apps/dex/alexa/alexa-skills-kit/tutorials/navigation/3-off._TTH_.png)](./instructions/3-connect-vui-to-code.md)[![Testing](https://m.media-amazon.com/images/G/01/mobile-apps/dex/alexa/alexa-skills-kit/tutorials/navigation/4-off._TTH_.png)](./instructions/4-testing.md)[![Customization](https://m.media-amazon.com/images/G/01/mobile-apps/dex/alexa/alexa-skills-kit/tutorials/navigation/5-off._TTH_.png)](./instructions/5-customization.md)[![Publication](https://m.media-amazon.com/images/G/01/mobile-apps/dex/alexa/alexa-skills-kit/tutorials/navigation/6-off._TTH_.png)](./instructions/6-publication.md)
+## Introduction
+This Bootcamp has four main parts as shown below. The intent 
+of this Bootcamp is to help attendees understand what's "under the 
+hood" of the CVRA and the IoT Device Simulator so that they can 
+modify and extended it to fir their scenarios. 
+1. Deploy the CVRA (15 mins.)
+2. Install the IoT Device Simulator and Generate Trip Data (30 mins.)
+3. Deploy the ConnectedCar Alexa Skill (20 mins.)
+4. Cleanup (10 mins.)
+5. Ideas for Customization and Enhancement
 
-## What You Will Learn
-*  [AWS Lambda](http://aws.amazon.com/lambda)
-*  [Alexa Skills Kit (ASK)](https://developer.amazon.com/alexa-skills-kit)
-*  Using the [Skill builder (beta)](https://developer.amazon.com/public/solutions/alexa/alexa-skills-kit/docs/ask-define-the-vui-with-gui)
-*  Voice User Interface (VUI) Design
+> If you have established an AWS account within the last 12 months, then this lab will be in the free tier. Otherwise, costs are anticipated to be less than $5
 
-## What You Will Need
-*  [Amazon Developer Portal Account](http://developer.amazon.com)
-*  [Amazon Web Services Account](http://aws.amazon.com/)
-*  The sample code on [GitHub](https://github.com/dixonaws/autoguide).
-*  [ASK Python SDK](https://github.com/alexa/alexa-skills-kit-sdk-for-python)
-*  A basic understanding of Python.
+---
 
-## Instructions
-1. Use the ASK CLI to create a new Alexa skill based on this repository<br>
-```
-ask new --template --skill-name "autoguide" --url https://www.dixonaws.com/alexaskills.json
-```
-
-This will create a new directory called "autoguide"
- 
-2. Install the dependencies in the lambda/py directory<br>
-Change to the "autoguide" directory and issue the following command:
+## Local Prepation Steps
+First, create a *work directory* where you can download the git repository for this bootcamp,
+save the worksheet, make notes, etc. On my macOS system, I use ~/Developer/bootcamps (that is, /Users/dixonaws/Developer/bootcamps.) 
+Second, clone the git repository for this bootcamp:
 ```bash
-pip install -r lambda/py/requirements.txt -t lambda/py
+git clone https://github.com/dixonaws/reinvent_cvra_bootcamp
+```
+
+You should now have a new directory, *reinvent_cvra_bootcamp* in your work direcrtory. Make
+
+Third, complete the worksheet below *or*, if you are on macOS, you can use a utility in the reinvent_cvra_bootcamp to
+check versions and create worksheet (called worksheet.txt) for you:
+```bash
+chmod +x create_worksheet.sh
+./create_worksheet.sh
+```
+
+---
+
+## 1. Deploy the CVRA (15 mins.)
+Let's deploy the Connected Vehicle Reference Architecture (CVRA).
+ Following the [directions here](https://docs.aws.amazon.com/solutions/latest/connected-vehicle-solution/deployment.html), deploy 
+ the CVRA in an AWS account where you have administrator access.
+The CVRA comes with a Cloudformation template that deploys and configures
+all of the AWS services necessary to ingest, store, process, and
+analyze data at scale from IoT devices. Automotive use cases aside,
+the CVRA provides a useful example of how to secure connect an 
+IoT device, perform JITR (Just in Time Registration), use 
+Kinesis Analytics to query streams of data, use an IoT rule to 
+store data in S3, etc.
+
+The CVRA Cloudformation 
+template returns these outputs:
+
+| Key | Value | Description | Associated AWS Service
+|:---|:---|:---|:---
+UserPool|arn:aws:cognito-idp:us-east-1:000000000:userpool/us-east-1_loAchZlyI|Connected Vehicle User Pool| Cognito
+CognitoIdentityPoolId|us-east-1:de4766b0-519a-4030-b036-97a3a2291c98|	Identity Pool ID| Cognito
+VehicleOwnerTable|	cvra-demo-VehicleOwnerTable-1TMCCT7LY76B0|	Vehicle Owner table|DynamoDB
+CognitoUserPoolId|	us-east-1_loAchZlyI|	Connected Vehicle User Pool ID|Cognito
+CognitoClientId|	6rjtru6aur0vni0htpvb49qeuf|	Connected Vehicle Client|Cognito
+DtcTable|	cvra-demo-DtcTable-UPJUO460FVYT|	DTC reference table|DynamoDB
+VehicleAnomalyTable|	cvra-demo-VehicleAnomalyTable-E3ZR7I8BN41D|	Vehicle Anomaly table|DynamoDB
+VehicleTripTable|	cvra-demo-VehicleTripTable-U0C6DSG0JW11|	Vehicle Trip table|DynamoDB
+TelemetricsApiEndpoint|	https://abcdef.execute-api.us-east-1.amazonaws.com/prod|RESTful API endpoint to interact with the CVRA (Cognito authZ required)|API Gateway
+Telemetrics API ID|(not used)|(not used)|API Gateway
+HealthReportTable|	cvra-demo-HealthReportTable-C4VRARO31UZ1|	Vehicle Health Report table|DynamoDB
+VehicleDtcTable|	cvra-demo-VehicleDtcTable-76E1UB71GEH3|	Vehicle DTC table|DynamoDB
+
+**Validation**: run the following command from a terminal window:
+```bash
+aws cloudformation describe-stacks --stack-name cvra-demo --query 'Stacks[*].StackStatus'
+```
+
+> We'll refer to the CVRA Cloudformation stack as **cvra-demo** throughout this bootcamp.
+
+The output should resemble something like this:
+```json
+[
+    "CREATE_COMPLETE"
+]
+```
+
+We're interested in the *VehicleTripTable* -- a table in DynamoDB. You can view the outputs from your 
+CVRA deployment through the AWS Console or by using the CLI with something like:
+```bash
+aws cloudformation describe-stacks --stack-name cvra-demo --output table --query 'Stacks[*].Outputs[*]'
+```
+
+---
+ 
+## 2. Deploy the IoT Device Simulator and Generate Trip Data (30 mins.)
+In this section, you'll install and configure the AWS IoT Device Simulator to generate 
+trip data. [Follow these directions](https://aws.amazon.com/answers/iot/iot-device-simulator/) 
+to install the simulator in your own AWS account.
+
+You can provision up to 25 vehicles to simulate trip data. Each simulated
+vehicle will travel one of several paths that have been pre-defined by the IoT
+device simulator. 
+
+The CVRA expects data to be published to a topic called: `connectedcar/telemetry/<VIN>` The 
+device simulator allows you to simulate a number of vehicles and generate trip data.
+The payload is of the form:
+
+```json
+{
+  "timestamp": "2018-08-25 22:38:40.791000000",
+  "trip_id": "871be6ea-4ee6-49b8-8a9b-b6ebe5050c8a",
+  "vin": "9JVVV63E5NVZWH5UH",
+  "name": "odometer",
+  "value": 2.267
+}
+```
+
+---
+
+## 3. Deploy the ConnectedCar Alexa Skill (20 mins.)
+In this section, we'll deploy an Alexa skill called ConnectedCar that will read back information about 
+the three recent trips that you have taken. You must have the ASK-CLI installed to complete this part of the lab.
+
+### 3.1 Run a Python Program to Test Your Access
+First, you can use a Python program included with the reinvent_cvra_bootcamp repo, getRecentTrips.py, to 
+test your configuration sofar. The best way to run this program is within a Python Virtual Environment. For the 
+impatient, install a virtual environment, install the dependencies from requirements.txt, and run getRecentTrips.py.
+
+<details>
+<summary><strong>Step-by-step instructions (expand for details)</strong></summary>
+<p>
+Install and activate Python virtual environment in ./venv (macOS):
+
+```bash
+virtualenv venv
+source venv/bin/activate
+```
+
+Install dependencies (macOS):
+```bash
+pip install -r requirements.txt
+```
+
+Run the program:
+```bash
+python getRecentTrips.py <TripTable>
+```
+
+Or, if you wanted to be very clever using your <i>ninja bash skills</i>, you could do something like this on the bash prompt: 
+
+```bash
+python getRecentTrips.py `aws cloudformation describe-stacks --stack-name cvra-demo --output table --query 'Stacks[*].Outputs[*]' |grep 'Vehicle Trip table' |awk -F "|" '{print $4}'`
+```
+> Quote trifecta: Note the tricky combination of backticks, single quotes, AND double quotes!
+</p>
+</details>
+<br>
+
+You should see output similar to the following after running the program:
+```json(venv) f45c898a35bf:reinventCvraBootcamp dixonaws$ python3 getRecentTrips.py cvra-demo-VehicleTripTable-U0C6DSG0JW11
+Scanning trip table cvra-demo-VehicleTripTable-U0C6DSG0JW11... done (0).
+Found 18 items in the trip table.
+dictItems is a <class 'list'>
+**** Trip 1 (VIN: 2Z61V6JISOE60EWI8)
+{'ignition_status': {'S': 'off'}, 'transmission_gear_position': {'S': 'fourth'}, 'engine_speed_mean': {'N': '3525.2780709525855'}, 'name': {'S': 'aggregated_telemetrics'}, 'driver_safety_score': {'N': '74.82328344340092'}, 'brake_mean': {'N': '0'}, 'high_braking_event': {'N': '0'}, 'fuel_level': {'N': '99.95453355436261'}, 'latitude': {'N': '38.958911'}, 'idle_duration': {'N': '213'}, 'fuel_consumed_since_restart': {'N': '0.019374198537822133'}, 'torque_at_transmission_mean': {'N': '314.3124901722019'}, 'timestamp': {'S': '2018-08-21 23:13:01.589000000'}, 'vehicle_speed_mean': {'N': '79.9034721171209'}, 'start_time': {'S': '2018-08-21T23:12:31.456Z'}, 'end_time': {'S': '2018-08-21T23:13:01.589Z'}, 'trip_id': {'S': '84983a6b-0881-4600-ad20-9db40eb7f868'}, 'oil_temp_mean': {'N': '29.021054075000006'}, 'geojson': {'M': {'bucket': {'S': 'connected-vehicle-trip-us-east-1-477157386854'}, 'key': {'S': 'trip/2Z61V6JISOE60EWI8/84983a6b-0881-4600-ad20-9db40eb7f868.json'}}}, 'accelerator_pedal_position_mean': {'N': '38.609446258882855'}, 'longitude': {'N': '-77.401168'}, 'vin': {'S': '2Z61V6JISOE60EWI8'}, 'brake_pedal_status': {'BOOL': False}, 'high_speed_duration': {'N': '0'}, 'odometer': {'N': '0.6705392939350361'}, 'high_acceleration_event': {'N': '2'}}
+...
 
 ```
-This command will install all of the dependencies that the Lambda function will need to execute 
-when invoked by the Alexa skill (e.g., the ask SDK, Python requests library, etc.)
 
-3. Deploy the skill<br>
+The getRecentTrips.py program simply queries your DynamoDB trip table, which is similar to the ConnectedCar skill that 
+we'll deploy in the next section.
+<details>
+<summary><strong>Code details for getRecentTrips.py (expand for details)</strong></summary>
+Have a look at the code listing for getRecentTrips.py. The guts 
+are similar to the ConnectedCar skill that we'll deploy in the next
+step, particularly the call to <i>scan</i> the DynamoDB trip table:
+
+```python 
+dynamoDbClient=boto3.client('dynamodb')
+
+    response=dynamoDbClient.scan(
+        TableName='cvra-demo-VehicleTripTable-U0C6DSG0JW11',
+        Select='ALL_ATTRIBUTES'
+    )
+
+    dictItems=response['Items']
+
+    intRecordCount=json.dumps(response['Count'])
+    print("Found " + str(intRecordCount) + " items in the trip table.")
+
+    intTripNumber=1
+    for item in dictItems:
+        strVin=str(item['vin']['S'])
+        print("**** Trip " + str(intTripNumber) + " (VIN: " + strVin + ")")
+        print(item)
+        print()
+        intTripNumber=intTripNumber+1
+
+    print("dictItems is a " + str(type(dictItems)))
+
+```
+> An improvement here for production applications would be to 
+> query the DynamoDB table instead of scanning it, per the 
+> [best practices for DynamoDB](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/best-practices.html). 
+> You may even elect to create an API layer in front fo the 
+> DynamoDB table so that other applications can use the 
+> data.
+</details>
+
+
+### 3.2 Deploy the Alexa Skill with the ASK-CL 
+In ths step, you'll use the trip data recorded in your DynamoDB table with an Alexa skill called ConnectedCar. First, you'll
+need to create an account on developer.amazon.com and initilize the ASK CLI if you haven't already done so.
+
+<details>
+<summary><strong>Initialize the ASK CLI (expand for details)</strong></summary>
 Issue the following command:
+```bash
+ask init
+```
+
+You should now see this screen in the command prompt. This step isused to select your AWS profile. Choose the default profile.
+```bash
+(venv) jpdixonmbp:reinvent_cvra_bootcamp jpdixon$ ask init
+? Please create a new profile or overwrite the existing profile.
+ (Use arrow keys)
+  ──────────────
+❯ Create new profile 
+  ──────────────
+  Profile              Associated AWS Profile
+  [default]                 "default" 
+
+```
+
+Next, you'll see the following screen to select the AWS profile to use for Lambda function deployment. Choose default:
+```bash
+(venv) jpdixonmbp:reinvent_cvra_bootcamp jpdixon$ ask init
+? Please create a new profile or overwrite the existing profile.
+ [default]                 "default"
+-------------------- Initialize CLI --------------------
+Setting up ask profile: [default]
+? Please choose one from the following AWS profiles for skill's Lambda function deployment.
+ 
+❯ default 
+  dixonaws@amazon.com 
+  jpdixon@gmail.com 
+  ccdtw 
+  ──────────────
+  Skip AWS credential for ask-cli. 
+  Use the AWS environment variables. 
+  ──────────────
+
+
+```
+
+Next, the ASK CLI will open a browser window to amazon.com and ask you to sign in using your developer account credentials. Sign in and 
+close the browser. 
+```bash
+(venv) jpdixonmbp:reinvent_cvra_bootcamp jpdixon$ ask init
+? Please create a new profile or overwrite the existing profile.
+ [default]                 "default"
+-------------------- Initialize CLI --------------------
+Setting up ask profile: [default]
+? Please choose one from the following AWS profiles for skill's Lambda function deployment.
+ default
+Switch to 'Login with Amazon' page...
+  ◝  Listening on http://localhost:9090
+
+
+```
+If all goes well, you should see this on the command prompt:
+```bash
+(venv) jpdixonmbp:reinvent_cvra_bootcamp jpdixon$ ask init
+? Please create a new profile or overwrite the existing profile.
+ [default]                 "default"
+-------------------- Initialize CLI --------------------
+Setting up ask profile: [default]
+? Please choose one from the following AWS profiles for skill's Lambda function deployment.
+ default
+Switch to 'Login with Amazon' page...
+Tokens fetched and recorded in ask-cli config.
+Vendor ID set as M3D1DAHOJTACU3
+
+Profile [default] initialized successfully.
+(venv) jpdixonmbp:reinvent_cvra_bootcamp jpdixon$ 
+```
+
+
+</details>
+
+
+Once you have confirmed that your DynamoDB Trip table contains trip data withg getRecentTrips.py, and 
+initialized the Alexa Skills Kit CLI, issue the following command from your *work* directory 
+to clone the ConnectedCar skill. This command will create a new directory called ConnectedCar in the current directory:
+
+```bash
+ask new --skill-name "ConnectedCar" --url https://github.com/dixonaws/ConnectedCarAlexa.git  
+```
+
+//todo
+Modify ConnectedCar's Lambda function to use your DynamoDB table. Then simply deploy it with:
 ```bash
 ask deploy
 ```
 
-This will deploy the Alexa skill so that it will be visible in the developer.amazon.com 
-console. Deployment will link your Alexa skill with a supporting Lambda function that will 
-be deployed in your AWS account. Check to make sure that both have been created successfully. The
-Alexa skill should be visible at https://developer.amazon.com/alexa/console/ask# and the Lambda
-function should be visible in your AWS console.
+### 3.3 Interact with ConnectedCar
+Open developer.amazon.com, login, and browse to you ConnectedCar Alexa Skill. Click on "Developer Console," and then "Alexa Skills Kit." You 
+should be able to see the ConnectedCar skill that you deployed in the previous section. Open ConnectedCar and click 
+on "Test" near the top of the page. You can use this console to interact with an Alexa skill without using a 
+physical Echo devce -- via text or via voice. Try these interactions:
 
-4. Update the Lambda function<br>
-We need to update the Lambda with your VehicleTripTable and an IAM role. We can accomplish
-this on one command with the AWS CLI. Edit the lambda-update-function-configuration.json file 
-and add your VehicleTripTable accordingly.
+"Alexa, open ConnectedCar"
 
-Then issue the following command:
+"Alexa, ask ConnectedCar about my car"
+
+"Alexa, ask ConnectedCar about my trip"
+
+You can also test via the command line with this command:
 ```bash
-aws lambda update-function-configuration --cli-input-json fileb://lambda-configuration.json --function-name <your_lambda_function>
+ask simulate --text "alexa, open connected car" --locale "en-US"
 ```
 
-> If you used as "AutoGuide" as the skill name, then your Lambda function would be named "ask-custom-autoguide-default"
+---
 
-> Your Lambda function name is listed in .ask/config   
+## 4. Cleanup (10 mins.)
+The last thing to do in this bootcamp is to clean up any resources that were deployed in your account. 
+From your worksheet, delete the following Cloudformation stacks:
+* Your CVRA Cloudformation stack
+* Your vehicle simulator Cloudformation stack
 
-If the update suucceeded, you should see something like this:
-```json
-{
-    "FunctionName": "ask-py-quiz",
-    "FunctionArn": "arn:aws:lambda:us-east-1:1234567890:function:ask-py-quiz",
-    "Runtime": "python3.6",
-    "Role": "arn:aws:iam::1234567890:role/ask-lambda-python-quiz",
-    "Handler": "lambda_function.lambda_handler",
-    "CodeSize": 2419973,
-    "Description": "Lambda function supporting the reinvent-cvra-bootcamp Alexa skill",
-    "Timeout": 8,
-    "MemorySize": 128,
-    "LastModified": "2018-09-25T20:01:41.924+0000",
-    "CodeSha256": "u0f1Uy6Cp7b8xD0tHEXMabc123psbKR5U=",
-    "Version": "$LATEST",
-    "VpcConfig": {
-        "SubnetIds": [],
-        "SecurityGroupIds": [],
-        "VpcId": ""
-    },
-    "Environment": {
-        "Variables": {
-            "TripTable": "myTripTable"
-        }
-    },
-    "TracingConfig": {
-        "Mode": "PassThrough"
-    },
-    "RevisionId": "c5c88456-f78d-4477-95ed-9666761891cd"
-}
-
-```
-
-5. Test the Alexa skill<br>
-Go to developer.amazon.com > Alexa Skills Kit and click on your new skill. From the Test tab,
-launch the skill with "open <skill name>". Or, you can use the ASK CLI to do this with:
 ```bash
-ask simulate --text "open united states quiz game" --locale "en-US"
+aws cloudformation delete-stack --stack-name <your CVRA stack>
+aws cloudformation delete-stack --stack-name <your vehicle simulator stack>
 ```
 
-## What Your Skill Will Do
-The Skill allows users to request a quiz about the 50 States of the USA. They will 
-receive 10 random questions or they can ask for specific information, such as, "tell me 
-about New York." This simple "quiz" skill will teach you how the different pieces of the 
-Alexa Skill development process fit together. We use will use the Skill builder UI to 
-build the Skill although the quiz itself does not employ the new "Dialog-Delegate 
-interface" model.
+From the AWS console, ensure that any associated S3 buckets, DynamoDB tables, and IoT service is clean.
 
+Also be sure to delete the following:
+* The Lambda function for ConnectedCar
+* The ConnectedCar skill from developer.amazon.com
+
+---
+
+## 5. Ideas for Customization and Enhancement
+Hopefully, you were able to learn how to make use
+of the data collected by a simulated connected vehicle (and ultimately any connected 
+device). Here are some ideas to make enhancements and improvements from here:
+* Adjust the IAM roles for more granular permissions
+* Develop account linking for the ConnectedCar skill to read back information only for linked VINs
+* Create an authenticated API to access the VehicleTripTable (API Gateway, Lambda, Cognito)
+* Enhance ConnectedCar to get the latest fuel prices in a certain location
+* Deploy the solution with a real vehicle, using Greengrass and an OBD II dongle!
