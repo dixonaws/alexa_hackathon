@@ -51,7 +51,6 @@ chmod +x create_worksheet.sh
 # Agenda
 | Timeslot | Item |
 |:---|:---|
-|Timeslot|Item|
 |830-9|Intro to the hackathon: what we'll be doing and how we'll work|
 |9-12 |Alexa Team and API Team work on their respective tasks separately|
 |12-1 |Lunch|
