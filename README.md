@@ -64,7 +64,7 @@ Create an Alexa Skill that can get data from a RESTful API endpoint. You can use
 to create a simple "hello world" skill based on a template. You may choose NodeJS or Python for this skill.
 *Approximate time for this task is 2 hours.*
 
-## References
+### References
 Walkthrough: https://developer.amazon.com/docs/smapi/quick-start-alexa-skills-kit-command-line-interface.html
 Youtube video: https://www.youtube.com/watch?v=I-Dw8IpnS2g
 
@@ -73,7 +73,7 @@ Create a RESTful API that the Alexa team can use to query data. The API should b
 by DynamoDB or Aurora, and return a JSON object. For now, the API should be built to respond to HTTP GET requests. 
 *Approximate time for this task is 2 hours.*
 
-## References
+### References
 You can use www.github.com/dixonaws/restful_dynamo or www.github.com/dixonaws/restful_aurora as starting points 
 to create your API. 
 
