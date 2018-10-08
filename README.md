@@ -23,7 +23,8 @@ to the workshop:
 This Hackathon has two main parts as descroibed above: the API part and the Alexa part. The intent 
 of this session is to take a "200-level" dive into microservice design by creating
 an Alexa skill and accompanying API. We'll use Lambda, API Gateway, DynamoDB, 
-IAM, and Alexa to demonstrate this. 
+IAM, and Alexa to demonstrate this. Both teams are encouraged to track lessons learned throughout the day by
+posting a stickynote to the parking lot. 
 
 > If you have established an AWS account within the last 12 months, then this lab will be in the free tier. Otherwise, costs are anticipated to be less than $5
 
