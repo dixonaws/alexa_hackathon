@@ -82,7 +82,12 @@ that returns custom messages, 2) don't worry about the other team's progress dur
 morning session -- instead, focus on developing your component and understanding how to modify it.
 
 # Integration
+During the afternoon, teams should combine and work to integrate, test, and enhance the Alexa skill. This is where
+the skill should be tested from the developer console as well as an Echo device.
 
+If time allows, the teams could simulate an authentication system by asking users for the PIN number when they 
+launch the Alexa skill. At launch, the skill could play a greeting and then ask the user for a PIN (which would
+be hardcoded into the Lambda function). 
 
 ---
 
