@@ -81,6 +81,8 @@ to create your API.
 that returns custom messages, 2) don't worry about the other team's progress during the 
 morning session -- instead, focus on developing your component and understanding how to modify it.
 
+# Integration
+
 
 ---
 
