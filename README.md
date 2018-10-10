@@ -62,7 +62,9 @@ chmod +x create_worksheet.sh
 
 # Alexa Team
 Create an Alexa Skill that can get data from a RESTful API endpoint. You can use the Alexa Skills Kit CLI (ask-cli)
-to create a simple "hello world" skill based on a template. You may choose NodeJS or Python for this skill.
+to create a simple "hello world" skill based on a template. You may choose NodeJS or Python for this skill. Note that the
+ASK-CLI uses NodeJS for the Lambda function. You can replace the Lambda function with a Python-based function if you choose. For
+examples of Pytyhon-based Lambda functions, see https://github.com/dixonaws/alexa-skills-kit-sdk-for-python
 *Approximate time for this task is 2 hours.*
 
 ### References
